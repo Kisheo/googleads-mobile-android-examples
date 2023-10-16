@@ -1,16 +1,18 @@
 package com.google.ads.rewardedinterstitialexample;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import androidx.fragment.app.DialogFragment;
-import androidx.appcompat.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.DialogFragment;
 
 /**
  * A dialog fragment to inform the users about an upcoming interstitial video ad and let the user
@@ -24,8 +26,8 @@ public class AdDialogFragment extends DialogFragment {
   /** Bundle argument's name for the unit of the reward amount. */
   public static final String REWARD_TYPE = "rewardType";
 
-  /** Number of seconds to count down before showing ads. */
-  private static final long COUNTER_TIME = 5;
+  /** Number of milliseconds to count down before showing ads. */
+  private static final long COUNTER_TIME_IN_MILLISECONDS = 5000;
 
   /** A string that represents this class in the logcat. */
   private static final String TAG = "AdDialogFragment";
@@ -75,41 +77,41 @@ public class AdDialogFragment extends DialogFragment {
 
     Bundle args = getArguments();
     int rewardAmount = -1;
-    String rewardType = null;
     if (args != null) {
       rewardAmount = args.getInt(REWARD_AMOUNT);
-      rewardType = args.getString(REWARD_TYPE);
     }
-    if (rewardAmount > 0 && rewardType != null) {
-      builder.setTitle(getString(R.string.more_coins_text, rewardAmount, rewardType));
+    if (rewardAmount > 0) {
+      builder.setTitle(
+          getResources().getQuantityString(
+              R.plurals.more_coins_text, rewardAmount, rewardAmount));
     }
 
     builder.setNegativeButton(
-            getString(R.string.negative_button_text),
-            new DialogInterface.OnClickListener() {
-              @Override
-              public void onClick(DialogInterface dialog, int id) {
+        getString(R.string.negative_button_text),
+        new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int id) {
                 getDialog().cancel();
               }
-            });
+        });
     Dialog dialog = builder.create();
-    createTimer(COUNTER_TIME, view);
+    createTimer(COUNTER_TIME_IN_MILLISECONDS, view);
     return dialog;
   }
 
   /**
    * Creates the a timer to count down until the rewarded interstitial ad.
    *
-   * @param time Number of seconds to count down.
+   * @param time Number of milliseconds to count down.
    * @param dialogView The view of this dialog for updating the remaining seconds count.
    */
   private void createTimer(long time, View dialogView) {
     final TextView textView = dialogView.findViewById(R.id.timer);
     countDownTimer =
-        new CountDownTimer(time * 1000, 50) {
+        new CountDownTimer(time, 50) {
           @Override
           public void onTick(long millisUnitFinished) {
-            timeRemaining = ((millisUnitFinished / 1000) + 1);
+            timeRemaining = MILLISECONDS.toSeconds(millisUnitFinished) + 1;
             textView.setText(
                 String.format(getString(R.string.video_starting_in_text), timeRemaining));
           }
