@@ -24,9 +24,8 @@ import android.util.Log;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.lifecycle.Lifecycle.Event;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.OnLifecycleEvent;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.FullScreenContentCallback;
@@ -38,7 +37,7 @@ import java.util.Date;
 
 /** Application class that initializes, loads and show ads when activities change states. */
 public class MyApplication extends Application
-    implements ActivityLifecycleCallbacks, LifecycleObserver {
+    implements ActivityLifecycleCallbacks, DefaultLifecycleObserver {
 
   private AppOpenAdManager appOpenAdManager;
   private Activity currentActivity;
@@ -54,9 +53,9 @@ public class MyApplication extends Application
   }
 
   /** LifecycleObserver method that shows the app open ad when the app moves to foreground. */
-  @OnLifecycleEvent(Event.ON_START)
-  protected void onMoveToForeground() {
-    // Show the ad (if available) when the app moves to foreground.
+  @Override
+  public void onStart(@NonNull LifecycleOwner owner) {
+    DefaultLifecycleObserver.super.onStart(owner);
     appOpenAdManager.showAdIfAvailable(currentActivity);
   }
 
@@ -128,6 +127,8 @@ public class MyApplication extends Application
     private static final String LOG_TAG = "AppOpenAdManager";
     private static final String AD_UNIT_ID = "/6499/example/app-open";
 
+    private final GoogleMobileAdsConsentManager googleMobileAdsConsentManager =
+        GoogleMobileAdsConsentManager.getInstance(getApplicationContext());
     private AppOpenAd appOpenAd = null;
     private boolean isLoadingAd = false;
     private boolean isShowingAd = false;
@@ -235,7 +236,7 @@ public class MyApplication extends Application
       if (!isAdAvailable()) {
         Log.d(LOG_TAG, "The app open ad is not ready yet.");
         onShowAdCompleteListener.onShowAdComplete();
-        if (GoogleMobileAdsConsentManager.getInstance(activity).canRequestAds()) {
+        if (googleMobileAdsConsentManager.canRequestAds()) {
           loadAd(activity);
         }
         return;
@@ -256,7 +257,7 @@ public class MyApplication extends Application
               Toast.makeText(activity, "onAdDismissedFullScreenContent", Toast.LENGTH_SHORT).show();
 
               onShowAdCompleteListener.onShowAdComplete();
-              if (GoogleMobileAdsConsentManager.getInstance(activity).canRequestAds()) {
+              if (googleMobileAdsConsentManager.canRequestAds()) {
                 loadAd(activity);
               }
             }
@@ -272,7 +273,7 @@ public class MyApplication extends Application
                   .show();
 
               onShowAdCompleteListener.onShowAdComplete();
-              if (GoogleMobileAdsConsentManager.getInstance(activity).canRequestAds()) {
+              if (googleMobileAdsConsentManager.canRequestAds()) {
                 loadAd(activity);
               }
             }
